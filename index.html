@@ -1,0 +1,363 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Chess Bits</title>
+
+		<link rel="stylesheet" href="css/reset.css">
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/black.css">
+		<link rel="stylesheet" href="lib/css/monokai.css">
+
+		<style>
+			mark { color: #f08; background-color: inherit; }
+		</style>
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+          <h1>Chess Bits</h1>
+        </section>
+
+				<section>
+          <h2>Why Chess?</h2>
+          <ul>
+            <li class="fragment">
+              Very well standardized:
+              <a href="https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation">FEN</a>,
+              <a href="https://en.wikipedia.org/wiki/Universal_Chess_Interface">UCI</a>,
+              <a href="https://en.wikipedia.org/wiki/Portable_Game_Notation">PGN</a>,
+              <a href="https://www.chessprogramming.org/Perft">perft</a>, ...
+            </li>
+            <li class="fragment">
+              Enormous community:
+              <a href="https://chessprogramming.org">chessprogramming.org</a>
+            </li>
+            <li class="fragment">
+              Tons of open source, well documented engines to <s>steal</s> learn from
+            </li>
+            <li class="fragment">Easier than you think</a>
+          </ul>
+        </section>
+
+        <section>
+          <h2>The Chess Board</h2>
+          <div style="columns: 2">
+            <img src="./images/initial.svg" style="width: calc(25vw); height: calc(25vw);"/>
+            <ul>
+              <li class="fragment fade-in">8x8 board</li>
+              <li class="fragment fade-in"><em>Ranks</em> are rows numbered from <mark>1</mark> to <mark>8</mark></li>
+              <li class="fragment fade-in"><em>Files</em> are columns named from <mark>A</mark> to <mark>H</mark></li>
+              <li class="fragment fade-in"><em>Squares</em> are named <mark>a1</mark>, <mark>h8</mark></li>
+            </ul>
+          </div>
+        </section>
+
+
+        <section>
+          <h2>FEN</h2>
+          <p>Standard for representing any chess position</p>
+          <pre><code>rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1</code></pre>
+
+          <p class="fragment fade-in">
+            Black's back row, then pawns:
+            <pre class="fragment"><code data-noescape><mark>rnbqkbnr/pppppppp</mark>/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1</code></pre>
+          </p>
+
+          <p class="fragment fade-in">
+            Then 4 empty rows:
+            <pre class="fragment"><code data-noescape>rnbqkbnr/pppppppp/<mark>8/8/8/8</mark>/PPPPPPPP/RNBQKBNR w KQkq - 0 1</code></pre>
+          </p>
+
+          <p class="fragment fade-in">
+            White's pieces:
+            <pre class="fragment"><code data-noescape>rnbqkbnr/pppppppp/8/8/8/8/<mark>PPPPPPPP/RNBQKBNR</mark> w KQkq - 0 1</code></pre>
+          </p>
+        </section>
+
+        <section>
+          <h2>FEN</h2>
+          <pre><code>rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1</code></pre>
+
+          <p class="fragment fade-in">
+            White's turn to move:
+            <pre class="fragment"><code data-noescape>rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR <mark>w</mark> KQkq - 0 1</code></pre>
+          </p>
+
+          <p class="fragment fade-in">
+            Both players can castle king-side and queen-side:
+            <pre class="fragment"><code data-noescape>rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w <mark>KQkq</mark> - 0 1</code></pre>
+          </p>
+
+          <p class="fragment fade-in">
+            Move clocks:
+            <pre class="fragment"><code data-noescape>rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - <mark>0 1</mark></code></pre>
+          </p>
+        </section>
+
+        <section>
+          <h2>FEN</h2>
+          <p>A FEN parser requires:</p>
+          <ul>
+            <li>String manipulation</li>
+            <li>Error handling</li>
+            <li>Data representation (structs, objects, whatever)</li>
+            <li>Test frameworks</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>UCI</h2>
+          <p>Protocol spoken between chess engines and UIs. Effectively <em>every</em> engine implements it.</p>
+          <pre class="fragment"><code data-noescape>> uci
+< id name LaughablyBad
+< uciok
+
+> position startpos moves e2e4 e7e5
+> go movetime 1000
+
+< info depth 1
+< info score cp 13 depth 1 nodes 13 time 15 pv f1b5
+
+> stop
+< bestmove g1f3</code></pre>
+        </section>
+
+        <section>
+          <h2>UCI</h2>
+          <p>A UCI implementation requires:</p>
+          <ul>
+            <li>Understanding I/O</li>
+            <li>Timeouts</li>
+            <li>Command dispatch patterns</li>
+            <li>GUI frameworks, if you want!</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>The Engine</h2>
+          <p>
+            Chess engines are basically just:
+          </p>
+
+          <ul>
+            <li class="fragment">Calculating legal moves</li>
+            <li class="fragment">Making and unmaking moves</li>
+            <li class="fragment">Figuring out who's winning</li>
+          </ul>
+
+          <p class="fragment"><em>Millions</em> of times per second</p>
+        </section>
+
+        <section>
+          <h2>Boards in Code</h2>
+          <div style="columns: 2">
+            <img style="height: calc(20vw); width: calc(20vw); margin-right: 20px;" src="./images/initial.svg" />
+
+            <p class="fragment" style="text-align:left">
+              The obvious solution:
+              <pre class="fragment"><code>pieces[8][8]</code></pre>
+            </p>
+
+            <ul>
+              <li class="fragment">What pieces are on the board?</li>
+              <li class="fragment">Where can they move?</li>
+              <li class="fragment">Who is under attack?</li>
+            </ul>
+          </div>
+        </section>
+
+        <section>
+          <h2>Bitboards</h2>
+          <p>
+            64 bits can represent any one attribute of a chess board.
+          </p>
+          <img src="./images/bit-positions.svg" style="height: calc(20vw);" />
+        </section>
+
+        <section>
+          <h2>Bitboards</h2>
+          <pre><code data-noescape>type Bitboard = u64;</code></pre>
+          <p class="fragment">
+            <span>With enough of them, you get the entire board:</span>
+            <pre class="fragment"><code data-noescape>struct Board {
+  pawns: Bitboard[2],
+  bishops: Bitboard[2],
+  // ...
+  occupied: Bitboard[2],
+}</code></pre>
+          </p>
+        </section>
+
+        <section>
+          <h2>Bitboards</h2>
+          <p>Take this position:</p>
+          <img src="./images/puzzle.svg" style="height: calc(20vw);" />
+        </section>
+
+        <section>
+          <h2>Bitboards</h2>
+          <div style="columns: 2">
+            <img src="./images/puzzle.svg" style="height: calc(25vw); width: calc(25vw)" />
+
+            <pre><code data-noescape>// board.occupied[Black] =
+ 0 0 0 <mark>1 1 1 1</mark> 0
+ 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0
+ 0 0 <mark>1</mark> 0 0 0 0 0
+ 0 0 <mark>1</mark> 0 0 <mark>1</mark> 0 0
+ 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0
+</code></pre>
+          </div>
+        </section>
+
+        <section>
+          <h2>Bitboards</h2>
+          <div style="columns: 2">
+            <img src="./images/puzzle.svg" style="height: calc(25vw); width: calc(25vw)" />
+            <pre><code data-noescape>// board.rooks[White] | board.rooks[Black]
+ 0 0 0 0 <mark>1</mark> <mark>1</mark> 0 0
+ 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 <mark>1</mark>
+ 0 0 0 0 0 <mark>1</mark> 0 0
+</code></pre>
+          </div>
+        </section>
+
+        <section>
+          <h2>Bit-wise</h2>
+          <ul>
+            <li>
+              How many pawns does white have?
+              <pre class="fragment"><code data-noescape>board.pawns[White].count_ones()</code></pre>
+            </li>
+
+						<li class="fragment">
+							Where are they?
+							<pre class="fragment"><code data-noescape>let pawns = board.pawns[White];
+for square in pawns.bits_set():
+  // ...
+</code></pre>
+						</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Mask Off</h2>
+          <p>Each piece's available moves can be pre-computed:</p>
+          <div style="columns: 2">
+            <img src="./images/Ne4.svg" style="height: calc(25vw); width: calc(25vw)" />
+            <pre class="fragment"><code data-noescape>// knightMoves[E4] =
+  0 0 0 0 0 0 0 0
+  0 0 0 0 0 0 0 0
+  0 0 0 <mark>1</mark> 0 <mark>1</mark> 0 0
+  0 0 <mark>1</mark> 0 0 0 <mark>1</mark> 0
+  0 0 0 0 0 0 0 0
+  0 0 <mark>1</mark> 0 0 0 <mark>1</mark> 0
+  0 0 0 <mark>1</mark> 0 <mark>1</mark> 0 0
+  0 0 0 0 0 0 0 0
+</code></pre>
+          </div>
+        </section>
+
+        <section>
+          <h2>Mask Off</h2>
+          <p>Most tasks become basic bitwise operations:</p>
+          <pre><code>func attackers(square: u8, board: Board) -> Bitboard {
+  (blackPawnAttacks[square]     & board.pawns(White))
+    | (whitePawnAttacks[square] & board.pawns(White))
+    | (knightMoves[square]      & board.knights())
+    | (bishopMoves[square]      & (board.bishops() | board.queens()))
+    | (rookMoves[square]        & (board.rooks()   | board.queens()))
+    | (kingMoves[square]        & board.kings())
+}</code></pre>
+        </section>
+
+        <section>
+          <h2>Bitboards</h2>
+          <p>A bitboard implementation requires:</p>
+          <ul>
+            <li>Understanding the numeric types</li>
+            <li><em>Lots</em> of testing</li>
+            <li>SIMD if you're braver than I</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>perft</h2>
+          <p>An easy way to test your move generator:</p>
+          <pre><code>func perft(fen: string, depth: int) -> int</code></pre>
+          <p>Given a position and the number of turns to search, how many nodes were encountered?</p>
+        </section>
+
+        <section>
+          <h2>perft</h2>
+          <p>Proven results for different positions are readily available</p>
+          <p>From the initial position:</p>
+          <pre><code>perft("", 1) == 20
+perft("", 2) == 400
+perft("", 3) == 8,902
+perft("", 4) == 197,281
+perft("", 5) == 4,865,609
+perft("", 6) == 119,060,324
+perft("", 7) == 3,195,901,860
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>perft</h2>
+          <p>Doubles as a great performance test!</p>
+          <p>Move generation dominates the run time of most engines</p>
+        </section>
+
+        <section>
+          <h2>It Never Ends</h2>
+          <ul>
+            <li class="fragment">Evaluation</li>
+            <li class="fragment">Zobrist hashing</li>
+            <li class="fragment">Alpha-beta Pruning</li>
+            <li class="fragment">Move ordering</li>
+            <li class="fragment">Opening / end-game books</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>&lt;3</h2>
+          <p><a href="https://pd.github.io/chess-bits">pd.github.io/chess-bits</a></p>
+        </section>
+			</div>
+		</div>
+
+		<script src="js/reveal.js"></script>
+
+		<script>
+			Reveal.initialize({
+        hash: true,
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true }
+				]
+			});
+		</script>
+	</body>
+</html>
